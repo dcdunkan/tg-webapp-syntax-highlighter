@@ -16,7 +16,6 @@
     src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
   <script>
     hljs.highlightAll();
-    hljs.initLineNumbersOnLoad();
   </script>
   <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
 
@@ -25,6 +24,7 @@
       document.documentElement.className = Telegram.WebApp.colorScheme;
     }
     Telegram.WebApp.onEvent('themeChanged', setThemeClass);
+
     setThemeClass();
   </script>
   <style>
@@ -32,13 +32,42 @@
       font-family: sans-serif;
       background-color: var(--tg-theme-bg-color, #ffffff);
       color: var(--tg-theme-text-color, #222222);
-      font-size: 16px;
+      font-size: 14px;
       color-scheme: var(--tg-color-scheme);
     }
 
     h2 {
       padding: 10px;
       text-align: center;
+    }
+
+    footer {
+      font-size: 10px;
+    }
+
+    .debug {
+      color: #ffffff83
+    }
+
+
+    button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+
+      font-size: .9rem;
+      padding: .15rem;
+      background-color: #828282;
+      color: 1e1e1e;
+      border: ridge 1px #7b7b7c;
+      border-radius: 5px;
+      text-shadow: #c4c4c4 0 0 2px;
+    }
+
+
+    button:hover {
+      cursor: pointer;
+      background-color: #bcbabb;
     }
 
     button.close_btn {
@@ -65,76 +94,103 @@
       user-select: none;
 
       text-align: right;
-      color: rgb(170, 169, 169);
+      color: #aaa9a9b7;
       vertical-align: center;
-      padding-right: 5px;
     }
 
     .hljs-ln-code {
-      padding-left: 10px;
+      padding-left: 15px;
     }
   </style>
 </head>
 
-<body style="visibility: hidden;">
-  <h2><samp><span style="color: #972eac;">&lt;</span><span style="color: #e29726;">Syntax</span> <span
-        style="color: #5992e9;">Highlighter</span><span style="color: #972eac;">&gt;</span></samp></h1>
+<body>
+  <div id="loader" style="text-align: center;">
+    <h2><samp>Highlighting...</samp></h2>
+  </div>
+  <div id="content" style="display: none;">
+    <h2>
+      <samp>
+        <span style="color: #972eac;">&lt;</span>
+        <span style="color: #e29726;">Syntax</span>
+        <span style="color: #5992e9;">Highlighter</span>
+        <span style="color: #972eac;">&gt;</span>
+      </samp>
+    </h2>
+
     <div id="codes"></div>
+
     <footer style="text-align: center;">
-      <samp>Created by <a href="https://t.me/dcbots">@dcbots</a></samp><br>
-      <samp>See project on <a href="https://github.com/dcdunkan/tg-webapp-syntax-highlighter">GitHub</a></samp><br>
-      <samp id="webview_data_status">Checking hash...</samp>
+      <samp>Created by <a href="https://t.me/dcbots">@dcbots</a><br>
+        See project on <a href="https://github.com/dcdunkan/tg-webapp-syntax-highlighter">GitHub</a><br>
+        Powered by <a href="https://highlightjs.org">highlight.js</a>
+      </samp><br><br>
+      <samp class="debug" id="webview_data_status">Checking hash...</samp>
     </footer>
+  </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
-    <script>
-      // Highlighting
-      const codes = document.getElementById("codes");
-      const params = new URL(window.location.href).searchParams;
-      const toHighlight = JSON.parse(decodeURIComponent(params.get("code"))); // ["1", "2"]
+  <script>
+    Telegram.WebApp.ready();
+    const loader = document.getElementById("loader");
+    const content = document.getElementById("content");
 
-      for (const code of toHighlight) {
-        const pre = document.createElement("pre");
-        const codeEl = document.createElement("code")
-        codeEl.classList.add("hljs-ln-code")
-        codeEl.innerHTML = code;
-        pre.appendChild(codeEl);
-        codes.appendChild(pre);
-      }
+    Telegram.WebApp.MainButton.showProgress(true)
 
-      // Telegram
-      Telegram.WebApp.MainButton.showProgress(true)
+    // Highlighting
+    const codesDiv = document.getElementById("codes");
 
-      Telegram.WebApp.ready();
+    const codeParam = new URL(window.location.href).searchParams.get("code")
+      .replace(/%/g, "%25") // Fix the "Malformed URI sequence error"
 
-      const initData = Telegram.WebApp.initData || '';
-      const initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
+    const toHighlight = JSON.parse(decodeURIComponent(codeParam)); // ["1", "2"]
 
-      // verify hash
-      if (initDataUnsafe.query_id && initData) {
-        $('#webview_data_status').show();
-        $.ajax('/check', {
-          type: 'POST',
-          data: { initData },
-          dataType: 'json',
-          success: function (result) {
-            if (result.ok) $('#webview_data_status').html('Debug: Hash is correct');
-            else $('#webview_data_status').html(result.error);
-          },
-          error: function (xhr) {
-            $('#webview_data_status').html('Server error');
-          }
-        });
-        Telegram.WebApp.MainButton.hideProgress();
+    for (const code of toHighlight) {
+      const pre = document.createElement("pre");
+      const codeEl = document.createElement("code")
+      codeEl.classList.add("hljs-ln-code")
+      codeEl.innerHTML = escapeHtml(code);
+      pre.appendChild(codeEl);
+      codesDiv.appendChild(pre);
+    }
 
-      }
+    hljs.initLineNumbersOnLoad();
 
-      $('body').css('visibility', '');
-      Telegram.WebApp.MainButton.setText('BACK TO BOT').show().onClick(Telegram.WebApp.close);
+    loader.style.display = "none"
+    content.style.display = "block"
 
-    </script>
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    }
+
+    // Telegram
+    const initData = Telegram.WebApp.initData || '';
+    const initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
+
+    // verify hash
+    if (initDataUnsafe.query_id && initData) {
+      $('#webview_data_status').show();
+      $.ajax('/check', {
+        type: 'POST',
+        data: { initData },
+        dataType: 'json',
+        timeout: 10000,
+        success: function (result) {
+          if (result.ok) $('#webview_data_status').html('[validation]: success');
+          else $('#webview_data_status').html(result.error);
+        },
+        error: function (xhr) {
+          $('#webview_data_status').html('Server error');
+        }
+      });
+      Telegram.WebApp.MainButton.hideProgress();
+    }
+
+    Telegram.WebApp.MainButton.setText('BACK TO BOT').show().onClick(Telegram.WebApp.close);
+  </script>
 </body>
 
 </html>
