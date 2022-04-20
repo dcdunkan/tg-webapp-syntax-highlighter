@@ -11,9 +11,9 @@ export const bot = new Bot(BOT_TOKEN);
 
 bot.command("start", async (ctx) => {
   await ctx.reply(
-"Hi there! I can syntax highlight the code blocks in your messages.\
-\nWhat is special about me? Send a message containing a code block. By @dcbots.\
-\nSource code: github.com/dcdunkan/tg-webapp-syntax-highlighter",
+    `Hi there! I can syntax highlight the code blocks in your messages.
+What is special about me? Send a message containing a code block. By @dcbots.
+Source code: github.com/dcdunkan/tg-webapp-syntax-highlighter`,
     {
       reply_markup: new InlineKeyboard().webApp(
         "See example",
@@ -50,11 +50,11 @@ bot.on(["::pre", "::code"], async (ctx) => {
     ).trim()
   );
 
+  const codeParam = encodeURIComponent(JSON.stringify(toHighlight));
+
   await ctx.reply("Highlighted code:", {
-    reply_markup: new InlineKeyboard().webApp(
-      "View",
-      SITE_URL + "?code=" + encodeURIComponent(JSON.stringify(toHighlight)),
-    ),
+    reply_markup: new InlineKeyboard()
+      .webApp("View", `${SITE_URL}?code=${codeParam}`),
   });
 });
 
