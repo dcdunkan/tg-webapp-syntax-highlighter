@@ -1,5 +1,4 @@
-import { validateWebAppData } from "https://raw.githubusercontent.com/grammyjs/validator/main/src/mod.ts";
-import { Router } from "https://deno.land/x/oak@v10.5.1/mod.ts";
+import { Router, validateWebAppData } from "../deps.ts";
 
 export const router = new Router();
 const BOT_TOKEN = Deno.env.get("BOT_TOKEN") as string;
@@ -18,7 +17,7 @@ router.post("/check", async (ctx) => {
 
 router.get("/", async (ctx) => {
   await ctx.send({
-    root: Deno.cwd(),
+    root: `${Deno.cwd()}/public`,
     path: `index.html`,
   });
 });

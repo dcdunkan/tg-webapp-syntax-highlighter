@@ -1,8 +1,6 @@
-import { config } from "https://deno.land/std@0.135.0/dotenv/mod.ts";
-await config({ export: true });
+import { Bot, config, InlineKeyboard, MessageEntity } from "../deps.ts";
 
-import { Bot, InlineKeyboard } from "https://deno.land/x/grammy@v1.8.0/mod.ts";
-import { MessageEntity } from "https://cdn.esm.sh/v77/@grammyjs/types@2.7.0/index";
+await config({ export: true });
 
 const BOT_TOKEN = Deno.env.get("BOT_TOKEN") as string;
 const SITE_URL = Deno.env.get("SITE_URL") as string;

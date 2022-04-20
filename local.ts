@@ -1,6 +1,6 @@
-import { Application } from "https://deno.land/x/oak@v10.5.1/application.ts";
-import { router } from "./server.ts";
-import { bot } from "./bot.ts";
+import { Application } from "./deps.ts";
+import { router } from "./src/router.ts";
+import { bot } from "./src/bot.ts";
 
 export const app = new Application();
 
