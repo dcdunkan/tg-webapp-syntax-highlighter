@@ -142,6 +142,7 @@
     if (!chat_id || !message_id) {
       status.innerText = "Invalid query";
     } else if (chat_id === "1" && message_id === "1") {
+      status.style.display = "none";
       document.getElementById("demo").style.display = "block";
     } else {
       highlight();
