@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="MobileOptimized" content="176" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+  <script
+    src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+    Telegram.WebApp.onEvent('themeChanged', setThemeClass);
+    setThemeClass();
+    function setThemeClass() {
+      document.documentElement.className = Telegram.WebApp.colorScheme;
+    }
+  </script>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background-color: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #222222);
+      font-size: 14px;
+      color-scheme: var(--tg-color-scheme);
+    }
+
+    button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+
+      font-size: .9rem;
+      padding: .15rem;
+      background-color: #828282;
+      color: 1e1e1e;
+      border: ridge 1px #7b7b7c;
+      border-radius: 5px;
+      text-shadow: #c4c4c4 0 0 2px;
+    }
+
+    button:hover {
+      cursor: pointer;
+      background-color: #bcbabb;
+    }
+
+    button.close_btn {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 0;
+      margin: 0;
+      padding: 16px 20px;
+      text-transform: uppercase;
+    }
+
+    a {
+      color: var(--tg-theme-button-color);
+      text-decoration: underline;
+    }
+
+    .hljs-ln-numbers {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+
+      text-align: right;
+      color: #aaa9a9b7;
+      vertical-align: center;
+      padding-right: 10px;
+    }
+
+    .hljs-ln-code {
+      padding-left: 15px;
+      text-align: left;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="content">
+    <h2 style="padding: 10px;">
+      <samp>
+        <span style="color: #972eac;">&lt;</span><span style="color: #e29726;">Syntaxy</span><span
+          style="color: #5992e9;">2.0</span><span style="color: #972eac;">&gt;</span>
+      </samp>
+    </h2>
+
+    <samp>
+      <h3 id="status">Highlighting...</h3>
+    </samp>
+    <div id="highlights" style="display: none;"></div>
+    <div id="demo" style="display: none;">
+      <pre><code class="hljs-ln-code">console.log("Hi, Mom!");</code></pre>
+    </div>
+
+    <footer style="font-size: 10px;">
+      <samp style="font-size: 12px;">WebEdition [Beta]</samp><br><br>
+      <samp>
+        Created by <a href="https://t.me/dcbots">@dcbots</a><br>
+        See project on <a href="https://github.com/dcdunkan/tg-webapp-syntax-highlighter">GitHub</a><br>
+        Powered by <a href="https://highlightjs.org">highlight.js</a>
+      </samp><br><br>
+      <samp id="validation_status" style="color: #ffffff83;">[validation]: checking...</samp>
+    </footer>
+  </div>
+
+  <script>
+    const validation_status = document.getElementById("validation_status");
+    const highlights = document.getElementById("highlights");
+    const status = document.getElementById("status");
+
+    /** Telegram part */
+    Telegram.WebApp.ready();
+    Telegram.WebApp.MainButton.setText("✕").show().onClick(Telegram.WebApp.close);
+    const initData = Telegram.WebApp.initData || '';
+    const initDataUnsafe = Telegram.WebApp.initDataUnsafe || {};
+    if (initDataUnsafe.query_id && initData) validateData();
+
+    /** Highlighting part
+     * `chat_id` and `message_id` are two query parameters used to get
+     * text to highlight from the database. For each text, create and set the text
+     * of a new <code>.
+     */
+    const searchParams = new URL(window.location.href).searchParams;
+    const chat_id = searchParams.get("chat_id");
+    const message_id = searchParams.get("message_id");
+
+    if (!chat_id || !message_id) {
+      status.innerText = "Invalid query";
+    } else if (chat_id === "1" && message_id === "1") {
+      document.getElementById("demo").style.display = "block";
+    } else {
+      highlight();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    }
+
+    async function validateData() {
+      const response = await fetch("/check", {
+        method: "POST",
+        body: JSON.stringify({ initData }),
+        headers: { "Content-Type": "application/json" },
+      })
+      if (!response.ok) { validation_status.innerText = "[validation]: server error"; return }
+
+      const result = await response.json();
+      if (result.ok) validation_status.innerText = "[validation]: success";
+      else validation_status.innerText = result.error;
+      setTimeout(() => {
+        validation_status.style.display = "none";
+      }, 5000);
+    }
+
+    async function highlight() {
+      const response = await fetch(`/getCode/${chat_id}/${message_id}`)
+      if (!response.ok) { status.innerText = "Server error"; return; }
+
+      const result = await response.json();
+      if (result.ok) {
+        const toHighlight = result.code;
+        for (let i = 0; i < toHighlight.length; i++) {
+          const code = toHighlight[i];
+          const pre = document.createElement("pre");
+          const codeEl = document.createElement("code");
+          codeEl.classList.add("hljs-ln-code");
+          codeEl.innerHTML = escapeHtml(code);
+          pre.appendChild(codeEl);
+          highlights.appendChild(pre);
+        }
+
+        hljs.highlightAll();
+        hljs.initLineNumbersOnLoad();
+
+        status.style.display = "none";
+        highlights.style.display = "block"
+      }
+      else status.innerText = "Couldn't find code";
+    }
+  </script>
+</body>
+
+</html>

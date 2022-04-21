@@ -1,22 +1,23 @@
-import { Bot, config, InlineKeyboard, MessageEntity } from "../deps.ts";
+import env from "./env.ts";
+import { Bot, InlineKeyboard, MessageEntity } from "../deps.ts";
+import { storage } from "./storage.ts";
 
-await config({ export: true });
-
-const BOT_TOKEN = Deno.env.get("BOT_TOKEN") as string;
-const SITE_URL = Deno.env.get("SITE_URL") as string;
-
-export const bot = new Bot(BOT_TOKEN);
+export const bot = new Bot(env.BOT_TOKEN);
 
 bot.command("start", async (ctx) => {
   await ctx.reply(
-    `Hi there! I can syntax highlight the code blocks in your messages.
-What is special about me? Send a message containing a code block. By @dcbots.
-Source code: github.com/dcdunkan/tg-webapp-syntax-highlighter`,
+    `Hi there! I can syntax highlight the code blocks in your messages. \
+Send a message containing a code block and see the magic!
+For more information see README in the source code: \
+github.com/dcdunkan/tg-webapp-syntax-highlighter
+
+Developed by @dcdunkan from @dcbots.`,
     {
+      disable_web_page_preview: true,
       reply_markup: new InlineKeyboard().webApp(
         "See example",
-        SITE_URL +
-          `?code=${encodeURIComponent('["console.log(\\"Hello, world!\\")"]')}`,
+        env.SITE_URL +
+          `?chat_id=1&message_id=1`,
       ),
     },
   );
@@ -41,19 +42,27 @@ bot.on(["::pre", "::code"], async (ctx) => {
     return code.trim().includes("\n");
   });
 
-  const toHighlight = codeEntities.map((entity) =>
+  const code = codeEntities.map((entity) =>
     text.slice(
       entity.offset,
       entity.offset + entity.length,
     ).trim()
   );
 
-  const codeParam = encodeURIComponent(JSON.stringify(toHighlight));
+  await storage.write(`${ctx.chat.id}.${ctx.msg.message_id}`, { code });
 
-  await ctx.reply("Highlighted code:", {
-    reply_markup: new InlineKeyboard()
-      .webApp("View", `${SITE_URL}?code=${codeParam}`),
-  });
+  await ctx.reply(
+    `Found ${code.length} code ${code.length > 1 ? "blocks" : "block"}`,
+    {
+      reply_to_message_id: ctx.msg.message_id,
+      allow_sending_without_reply: true,
+      reply_markup: new InlineKeyboard()
+        .webApp(
+          "Preview",
+          `${env.SITE_URL}?chat_id=${ctx.chat.id}&message_id=${ctx.msg.message_id}`,
+        ),
+    },
+  );
 });
 
 bot.catch(console.error);

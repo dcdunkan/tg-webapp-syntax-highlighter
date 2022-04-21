@@ -1,8 +1,7 @@
+import env from "./src/env.ts";
 import { Application } from "./deps.ts";
 import { router } from "./src/router.ts";
 import { bot } from "./src/bot.ts";
-
-const SITE_URL = Deno.env.get("SITE_URL") as string;
 
 router.post("/", async (ctx) => {
   await bot.init();
@@ -12,7 +11,7 @@ router.post("/", async (ctx) => {
 });
 
 if ((await bot.api.getWebhookInfo()).url === "") {
-  await bot.api.setWebhook(SITE_URL);
+  await bot.api.setWebhook(env.SITE_URL);
 }
 
 export const app = new Application();
